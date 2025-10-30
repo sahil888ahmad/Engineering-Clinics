@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>SkySwift — Flight Booking</title>
+<meta content="A fully‑featured flight booking demo website with rich styling, filters, seat selection, mock payment, and bookings storage." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<!-- jsPDF for PDF receipts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- QRCode generator -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<style>
+    :root{
+      --bg:#0b1221;             /* deep navy */
+      --bg-soft:#121a2d;        /* cards */
+      --ink:#e6ebff;            /* primary text */
+      --muted:#a5b3d9;          /* secondary text */
+      --accent:#7aa2ff;         /* buttons */
+      --accent-strong:#5989ff;  /* hover */
+      --accent-ink:#06122e;     /* text on accent */
+      --success:#3ad29f;        
+      --warning:#ffcf5a;
+      --danger:#ff6b6b;
+      --hair:#223055;           /* separators */
+      --chip:#1a2542;
+      --radius-xl:22px;
+      --radius-lg:16px;
+      --radius-md:12px;
+      --radius-sm:10px;
+      --shadow-1:0 10px 30px rgba(0,0,0,.35);
+      --shadow-2:0 20px 60px rgba(0,0,0,.45);
+      --ring:0 0 0 3px rgba(122,162,255,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1200px 500px at 80% -10%, rgba(92,119,255,.25), transparent 60%),
+      radial-gradient(900px 400px at 10% -10%, rgba(61,198,191,.18), transparent 65%), var(--bg);
+      color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:20px}
+    header{
+      position:sticky; top:0; z-index:50; backdrop-filter:saturate(1.2) blur(10px);
+      background:linear-gradient(180deg, rgba(11,18,33,.9), rgba(11,18,33,.7));
+      border-bottom:1px solid var(--hair);
+    }
+    .nav{display:flex;align-items:center;gap:18px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,#7aa2ff,#3ad29f);box-shadow:var(--shadow-1)}
+    .brand b{font-size:20px;letter-spacing:.3px}
+    .navlinks{display:flex;gap:12px;flex-wrap:wrap}
+    .navlinks a{padding:10px 14px;border-radius:12px;color:var(--muted);border:1px solid transparent}
+    .navlinks a.active,.navlinks a:hover{color:var(--ink);background:var(--chip);border-color:var(--hair)}
+    .actions{display:flex;gap:10px;align-items:center}
+    .btn{appearance:none;border:0;cursor:pointer;border-radius:14px;padding:12px 16px;font-weight:600;background:var(--accent);color:white;box-shadow:var(--shadow-1)}
+    .btn:hover{background:var(--accent-strong)}
+    .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--hair);box-shadow:none}
+    .btn.ghost:hover{background:var(--chip)}
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1200px 500px at 80% -10%, rgba(92,119,255,.25), transparent 60%),
+      radial-gradient(900px 400px at 10% -10%, rgba(61,198,191,.18), transparent 65%), var(--bg);
+      color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:20px}
+    header{
+      position:sticky; top:0; z-index:50; backdrop-filter:saturate(1.2) blur(10px);
+      background:linear-gradient(180deg, rgba(11,18,33,.9), rgba(11,18,33,.7));
+      border-bottom:1px solid var(--hair);
+    }
+    .nav{display:flex;align-items:center;gap:18px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,#7aa2ff,#3ad29f);box-shadow:var(--shadow-1)}
+    .brand b{font-size:20px;letter-spacing:.3px}
+    .navlinks{display:flex;gap:12px;flex-wrap:wrap}
+    .navlinks a{padding:10px 14px;border-radius:12px;color:var(--muted);border:1px solid transparent}
+    .navlinks a.active,.navlinks a:hover{color:var(--ink);background:var(--chip);border-color:var(--hair)}
+    .actions{display:flex;gap:10px;align-items:center}
+    .btn{appearance:none;border:0;cursor:pointer;border-radius:14px;padding:12px 16px;font-weight:600;background:var(--accent);color:white;box-shadow:var(--shadow-1)}
+    .btn:hover{background:var(--accent-strong)}
+    .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--hair);box-shadow:none}
+    .btn.ghost:hover{background:var(--chip)}
+
+    /* LOGIN OVERLAY STYLES */
+#loginOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.95);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#loginOverlay input {
+  margin: 5px;
+  padding: 10px;
+  width: 250px;
+  border-radius: 5px;
+  border: none;
+}
+
+#loginOverlay button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background: #ff69b4;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#loginOverlay h2 {
+  margin-bottom: 15px;
+}
+
+/* MAIN CONTENT */
+#mainContent {
+  padding: 20px;
+}
+    /* Login button */
+    #logoutBtn{
+      position:fixed;top:20px;right:20px;z-index:1000;
+      background:var(--danger);box-shadow:0 4px 12px rgba(255,107,107,0.4);
+    }
+
+/* Modal Background */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+}
+
+/* Modal Content */
+.modal-content {
+  background: #0d1b2a; /* dark navy/black */
+  color: white;
+  margin: 10% auto;
+  padding: 25px;
+  border-radius: 12px;
+  width: 350px;
+  box-shadow: 0 6px 20px rgba(30,144,255,0.5);
+  animation: slideDown 0.3s ease;
+}
+
+/* Heading */
+.modal-content h2 {
+  color: #1e90ff;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Input fields */
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  font-size: 14px;
+  color: #00ff7f;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #1e90ff;
+  border-radius: 6px;
+  background: #1b263b;
+  color: white;
+}
+
+.input-group input:focus {
+  border-color: #00ff7f;
+  outline: none;
+  box-shadow: 0 0 6px #00ff7f;
+}
+
+/* Social Login Buttons */
+.social-login button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Individual Styling */
+.google { background: #db4437; color: white; }
+.github { background: #24292e; color: white; }
+.amazon { background: #ff9900; color: black; }
+
+.google:hover { background: #c23321; }
+.github:hover { background: #444c56; }
+.amazon:hover { background: #e68900; }
+
+/* Email login */
+form {
+  margin-top: 15px;
+  text-align: left;
+}
+form label {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 14px;
+}
+form input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #2b2f3a;
+  color: white;
+}
+form input:focus { outline: 2px solid #00ff95; }
+.login-btn {
+  width: 100%;
+  background: #0077ff;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.login-btn:hover { background: #005fcc; }
+
+/* Animation */
+@keyframes fadeIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: linear-gradient(90deg, #1e90ff, #00ff7f);
+  color: white;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.submit-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,255,127,0.4);
+}
+
+/* Close button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #fff;
+}
+
+/* Animation */
+@keyframes slideDown {
+  from {transform: translateY(-40px); opacity: 0;}
+  to {transform: translateY(0); opacity: 1;}
+}
+
+/* ===== Chatbot Layout & Styling ===== */
+
+/* Center whole chatbot */
+.stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0a192f, #112d4e);
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* Chatbot shell */
+.chat-shell {
+  width: 100%;
+  max-width: 480px;
+  background: #0d1b2a;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+}
+
+/* Header */
+.chat-shell header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(90deg, #1e3a8a, #0ea5e9);
+  padding: 14px 18px;
+}
+
+.chat-shell header h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.chat-shell header .small {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Chat body (messages) */
+.chat-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #0a192f;
+}
+
+/* Example message styling */
+.chat-body .bot {
+  align-self: flex-start;
+  background: #1b263b;
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 80%;
+}
+
+.chat-body .user {
+  align-self: flex-end;
+  background: #0ea5e9;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 80%;
+}
+
+/* Input row */
+.input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: #0d1b2a;
+}
+
+#input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 20px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+  color: #000;
+}
+
+#send.btn {
+  background: #2196f3;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+#send.btn:hover {
+  background: #1976d2;
+}
+
+/* Scrollbar */
+.chat-body::-webkit-scrollbar { width: 6px; }
+.chat-body::-webkit-scrollbar-thumb {
+  background: #0ea5e9;
+  border-radius: 6px;
+}
+    
+    /* Hero */
+    .hero{padding:24px 0 8px}
+    .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+    .card{background:linear-gradient(180deg, rgba(122,162,255,.06), rgba(122,162,255,.02)); border:1px solid var(--hair); border-radius:var(--radius-xl); padding:20px; box-shadow:var(--shadow-1)}
+    .headline{font-size:34px; font-weight:800; line-height:1.1; margin:6px 0 10px}
+    .sub{color:var(--muted); font-weight:500; margin-bottom:18px}
+    .badges{display:flex;gap:10px;flex-wrap:wrap}
+    .chip{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:var(--chip);border:1px solid var(--hair);color:var(--muted)}
+
+    /* Search form */
+    form#searchForm{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end}
+    .field{display:flex;flex-direction:column;gap:8px}
+    .label{font-size:12px;color:var(--muted)}
+    .input,.select{width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--hair);background:#0f1830;color:var(--ink);outline:none}
+    .input:focus,.select:focus{box-shadow:var(--ring);border-color:transparent}
+    .switcher{display:flex;align-items:center;gap:6px}
+    .hint{font-size:12px;color:var(--muted)}
+
+    /* Results + filters */
+    .grid{display:grid;grid-template-columns:300px 1fr;gap:18px}
+    .filters .group{padding:14px;border-radius:16px;background:var(--bg-soft);border:1px solid var(--hair);margin-bottom:12px}
+    .filters .group h4{margin:0 0 8px;font-size:14px;color:var(--muted)}
+    .range{width:100%}
+    .airlines{display:flex;flex-wrap:wrap;gap:8px}
+    .airline{padding:8px 12px;border-radius:999px;border:1px solid var(--hair);background:var(--chip);cursor:pointer;color:var(--muted)}
+    .airline.active{background:rgba(122,162,255,.15);border-color:var(--accent);color:var(--ink)}
+    .result-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.result {
+  flex: 1 1 calc(50% - 12px);
+  min-width: 400px;
+}
+    .result{display:grid;grid-template-columns:1fr 1fr 160px;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--bg-soft);border:1px solid var(--hair)}
+    .meta{display:flex;gap:14px;align-items:center}
+    .avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(120deg,#7aa2ff,#a4b5ff);display:grid;place-items:center;color:var(--accent-ink);font-weight:800}
+    .t{font-size:20px;font-weight:700}
+    .dim{color:var(--muted)}
+    .price{font-size:22px;font-weight:800;text-align:right}
+
+    .toolbar{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin:8px 0}
+    .sort{padding:10px 12px;border-radius:12px;border:1px solid var(--hair);background:var(--chip);color:var(--ink)}
+
+    /* Steps & panels */
+    .steps{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+    .step{padding:8px 12px;border-radius:999px;background:var(--chip);border:1px solid var(--hair);color:var(--muted)}
+    .step.active{background:rgba(122,162,255,.15);color:var(--ink);border-color:var(--accent)}
+
+    .two-col{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    .summary{position:sticky;top:86px;height:max-content}
+    .summary .row{display:flex;justify-content:space-between;align-items:center;margin:4px 0}
+    .summary .total{font-size:22px;font-weight:800}
+
+    /* Seat map */
+    .seatmap{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+    .seat{display:grid;place-items:center;height:38px;border-radius:8px;border:1px solid var(--hair);background:var(--chip);cursor:pointer}
+    .seat.taken{background:#2a375e;color:#6778a8;cursor:not-allowed}
+    .seat.selected{outline:3px solid rgba(122,162,255,.4);background:#1b2a4f;border-color:var(--accent)}
+
+    /* Form rows */
+    .row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:18px;right:18px;background:#0f1830;border:1px solid var(--hair);padding:12px 14px;border-radius:14px;box-shadow:var(--shadow-2);display:none}
+
+    /* Footer */
+    footer{margin-top:40px;border-top:1px solid var(--hair);background:linear-gradient(180deg, rgba(11,18,33,.6), rgba(11,18,33,.95));padding:30px 0;color:var(--muted)}
+
+    /* Responsive */
+    @media (max-width: 1060px){
+      .hero-grid{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+      .two-col{grid-template-columns:1fr}
+      .summary{position:relative;top:0}
+      form#searchForm{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (max-width: 560px){
+      .result{grid-template-columns:1fr}
+      .price{text-align:left}
+    }
+  </style>
+
+<!-- jsPDF & QRious (ensured) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+</head>
+<body>
+  <div id="loginOverlay">
+  <h2>Login Portal</h2>
+  <input type="email" id="loginEmail" placeholder="Email">
+  <input type="password" id="loginPassword" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- MAIN PROJECT CONTENT (hidden until login) -->
+<div id="mainContent" style="display:none;">
+
+  <!-- Logout button -->
+  <button onclick="logout()" id="logoutBtn">Logout</button>
+</div>
+
+<header>
+<div class="container nav">
+<div class="brand">
+<div aria-hidden="true" class="logo">✈️</div>
+<b>SkySwift</b>
+</div>
+<nav class="navlinks">
+<a class="active" data-link="" href="#home">Home</a>
+<a data-link="" href="#results">Flights</a>
+<a data-link="" href="#mytrips">My Trips</a>
+<a data-link="" href="#chatbot">Chatbot</a>
+<a data-link="" href="#support">Support</a>
+<a data-link="" href="#whybook">Why Book With Us?</a>
+<a data-link="" href="#reviews">Reviews</a>
+</nav>
+
+<div class="actions">
+<button aria-label="Toggle theme" class="btn ghost" id="btnTheme">🌙</button>
+</div>
+</div>
+</header>
+<!-- Login Modal -->
+<div class="modal" id="loginModal">
+<div class="modal-content">
+<span class="close" onclick="closeLogin()">×</span>
+<h2>Login</h2>
+<form>
+<div class="input-group">
+<label>Email</label>
+<input placeholder="Enter your email" required="" type="email"/>
+</div>
+<div class="input-group">
+<label>Password</label>
+<input placeholder="Enter your password" required="" type="password"/>
+</div>
+<div class="social-login">
+<button class="google">Continue with Google</button>
+<button class="amazon">Continue with Amazon</button>
+<button class="facebook">Continue with Facebook</button>
+</div>
+<button class="submit-btn" type="submit">Sign In</button>
+</form>
+</div>
+</div>
+<main class="container">
+<!-- HERO / SEARCH -->
+<section class="hero" id="home">
+<div class="hero-grid">
+<div class="card">
+<h2>Welcome to SkySwift</h2>
+<p>Book your flights easily with SkySwift!</p>
+<div class="badges">
+<span class="chip">No booking fees</span>
+<span class="chip">24×7 support</span>
+<span class="chip">Free seat selection</span>
+</div>
+<h1 class="headline">Find, compare &amp; book flights — fast.</h1>
+<p class="sub">Search 100+ airlines. Filter by time, stops, and price. Hold seats and pay securely. All in one place.</p>
+<form autocomplete="off" id="searchForm">
+<div class="field">
+<label class="label" for="from">From</label>
+<input class="input" id="from" name="from" placeholder="e.g. Delhi (DEL)" required="">
+</input></div>
+<div class="field">
+<label class="label" for="to">To</label>
+<input class="input" id="to" name="to" placeholder="e.g. Mumbai (BOM)" required="">
+</input></div>
+<div class="field">
+<label class="label" for="depart">Depart</label>
+<input class="input" id="depart" name="depart" required="" type="date"/>
+</div>
+<div class="field">
+<label class="label" for="return">Return</label>
+<input class="input" id="return" name="return" type="date"/>
+</div>
+<div class="field">
+<label class="label" for="pax">Passengers</label>
+<select class="select" id="pax" name="pax">
+<option>1 Adult</option>
+<option>2 Adults</option>
+<option>3 Adults</option>
+<option>4 Adults</option>
+</select>
+</div>
+<div class="field">
+<label class="label" for="cabin">Cabin</label>
+<select class="select" id="cabin" name="cabin">
+<option>Economy</option>
+<option>Premium Economy</option>
+<option>Business</option>
+<option>First</option>
+</select>
+</div>
+<button class="btn" style="grid-column:1/-1" type="submit">🔎 Search Flights</button>
+</form>
+<p class="hint" id="searchHint"></p>
+</div>
+<div class="home-layout">
+<!-- Left side: Easy Booking Image -->
+<div class="feature-image">
+<img alt="Easy Booking in 3 Steps" src="https://www.booking2hotels.com/assets/img/booking-engine/pic1.png"/>
+</div>
+<style>
+      .feature-image{
+        text-align:center;
+        margin:20px O;
+      }
+
+      .feature-image img{
+        border-radius:12px;
+        max-width:90%;
+      }
+    </style>
+<div aria-live="polite" class="card">
+<h3 style="margin:0 0 10px">Trending routes</h3>
+<div class="result-list" id="trending"></div>
+</div>
+</div>
+</div></section>
+<!-- RESULTS -->
+<section id="results" style="display:none">
+<div class="steps">
+<span class="step active" data-step="1">1. Choose flight</span>
+<span class="step" data-step="2">2. Passengers &amp; seats</span>
+<span class="step" data-step="3">3. Pay</span>
+<span class="step" data-step="4">4. Confirmation</span>
+</div>
+<div class="toolbar">
+<label class="hint">Sort by</label>
+<select class="sort" id="sort">
+<option value="best">Best</option>
+<option value="price">Lowest price</option>
+<option value="duration">Shortest duration</option>
+<option value="depart">Earliest departure</option>
+</select>
+</div>
+<div class="grid">
+<aside class="filters">
+<div class="group">
+<h4>Stops</h4>
+<div class="switcher"><input id="nonstop" type="checkbox"/><label for="nonstop">Non‑stop only</label></div>
+</div>
+<div class="group">
+<h4>Departure time</h4>
+<input class="range" id="depRange" max="23" min="0" type="range" value="0"/>
+<div class="hint">After <span id="depAfter">00:00</span></div>
+</div>
+<div class="group">
+<h4>Airlines</h4>
+<div class="airlines" id="airlines"></div>
+</div>
+<div class="group">
+<h4>Max price</h4>
+<input class="range" id="priceMax" max="20000" min="2000" step="500" type="range" value="20000"/>
+<div class="hint">Up to ₹<span id="priceMaxVal">20000</span></div>
+</div>
+</aside>
+<div>
+<div class="result-list" id="resultsList"></div>
+</div>
+</div>
+</section>
+<!-- PASSENGERS & SEATS -->
+<section id="passengers" style="display:none">
+<div class="steps">
+<span class="step" data-step="1">1. Choose flight</span>
+<span class="step active" data-step="2">2. Passengers &amp; seats</span>
+<span class="step" data-step="3">3. Pay</span>
+<span class="step" data-step="4">4. Confirmation</span>
+</div>
+<div class="two-col">
+<div class="card">
+<h3>Passenger details</h3>
+<div class="row">
+<div class="field"><label class="label">First name</label><input class="input" id="fn" required=""/></div>
+<div class="field"><label class="label">Last name</label><input class="input" id="ln" required=""/></div>
+</div>
+<div class="row">
+<div class="field"><label class="label">Email</label><input class="input" id="em" required="" type="email"/></div>
+<div class="field"><label class="label">Phone</label><input class="input" id="ph" placeholder="10‑digit" type="tel"/></div>
+</div>
+<h3 style="margin-top:16px">Choose your seats</h3>
+<div aria-label="Seat map" class="seatmap" id="seatMap" role="grid"></div>
+<p class="hint">Tip: Blue outline = your selection | Gray = taken</p>
+<h3 style="margin-top:16px">Add‑ons</h3>
+<div class="switcher"><input id="bag" type="checkbox"><label for="bag">Extra baggage (₹500)</label></input></div>
+<div class="switcher"><input id="meal" type="checkbox"><label for="meal">Meal (₹250)</label></input></div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button class="btn ghost" id="backToResults">← Back</button>
+<button class="btn" id="toPayment">Continue to payment</button>
+</div>
+</div>
+<aside class="card summary" id="summary"></aside>
+</div>
+</section>
+<!-- PAYMENT -->
+<section id="payment" style="display:none">
+<div class="steps">
+<span class="step" data-step="1">1. Choose flight</span>
+<span class="step" data-step="2">2. Passengers &amp; seats</span>
+<span class="step active" data-step="3">3. Pay</span>
+<span class="step" data-step="4">4. Confirmation</span>
+</div>
+<div class="two-col">
+<div class="card">
+<h3>Payment</h3>
+<div class="row">
+<div class="field"><label class="label">Card holder</label><input class="input" id="ch" placeholder="As on card" required=""/></div>
+<div class="field"><label class="label">Card number</label><input class="input" id="cn" inputmode="numeric" maxlength="19" placeholder="1234 5678 9012 3456"/></div>
+</div>
+<div class="row">
+<div class="field"><label class="label">Expiry</label><input class="input" id="exp" maxlength="5" placeholder="MM/YY"/></div>
+<div class="field"><label class="label">CVV</label><input class="input" id="cvv" maxlength="4" placeholder="***"/></div>
+</div>
+<div class="switcher" style="margin-top:10px"><input id="tnc" type="checkbox"/><label for="tnc">I agree to the terms &amp; refund policy</label></div>
+<div style="display:flex;gap:10px;margin-top:16px">
+<button class="btn ghost" id="backToPassengers">← Back</button>
+<button class="btn" id="payNow">Pay now</button>
+</div>
+</div>
+<aside class="card summary" id="paySummary"></aside>
+</div>
+</section>
+<!-- CONFIRMATION -->
+<section id="confirmation" style="display:none">
+<div class="card" style="text-align:center">
+<h2>🎉 Booking confirmed</h2>
+<p class="sub">Your e‑ticket and invoice have been emailed. Safe travels!</p>
+<div id="confDetails" style="max-width:640px;margin:0 auto"></div>
+<div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+<a class="btn" data-link="" href="#mytrips">View my trips</a>
+<a class="btn ghost" data-link="" href="#home">Book another</a>
+</div>
+</div>
+</section>
+<!-- MY TRIPS -->
+<section id="mytrips" style="display:none">
+<div class="card">
+<h3>My trips</h3>
+<div class="result-list" id="tripsList"></div>
+</div>
+</section>
+<!-- CHATBOT -->
+<section id="chatbot" style="display:none">
+<!-- jsPDF for PDF receipts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- qrious for QR rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+<body>
+<div class="stage">
+<div aria-label="SkySwift Assistant" class="chat-shell" role="application">
+<header>
+<div aria-hidden="true" class="logo">✈️</div>
+<div>
+<h1>SkySwift Assistant</h1>
+<div class="small">Type <strong>help</strong> or choose a number 1–9 from the menu.</div>
+</div>
+</header>
+<main aria-live="polite" class="chat-body" id="chat"></main>
+<div class="input-row">
+<input id="input" placeholder="Type a command (e.g., book, view, cancel T1234, help)">
+<button class="btn" id="send">Send</button>
+</input></div>
+</div>
+</div>
+<!-- UPI QR modal -->
+<div aria-hidden="true" class="modal" id="upiModal">
+<div class="modal-card">
+<h3>UPI Payment</h3>
+<canvas height="180" id="upiQR" width="180"></canvas>
+<div class="small-muted" id="upiInfo" style="margin-top:10px"></div>
+<div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px">
+<button class="btn alt" id="upiCancel">Cancel</button>
+<button class="btn" id="upiPaid">I Have Paid</button>
+</div>
+</div>
+</div>
+<!-- generic modal for card/bank/paytm inputs -->
+<div aria-hidden="true" class="modal" id="paymentModal">
+<div class="modal-card">
+<h3 id="paymentTitle">Payment</h3>
+<div id="paymentBody"></div>
+<div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px">
+<button class="btn alt" id="payCancel">Cancel</button>
+<button class="btn" id="payProceed">Proceed</button>
+</div>
+</div>
+</div>
+
+<!-- PDF Ticket + QR generation -->
+<script>
+function generateTicketPDF(order) {
+  try {
+    if(!order) order = window.store && window.store.order;
+    if(!order) { console.warn('No order found for PDF generation'); return; }
+
+    // Create QR content: include PNR, passenger name, flight no, date, route
+    const qrText = `PNR:${order.pnr}|Name:${order.passenger?.fn || ''} ${order.passenger?.ln || ''}|Flight:${order.airline} ${order.flightNo}|Date:${order.date}|Route:${order.from}->${order.to}`;
+    // generate QR using QRious to a dataURL
+    const qr = new QRious({ value: qrText, size: 200 });
+    const qrDataUrl = qr.toDataURL();
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'pt', format:'a4'});
+
+    const left = 40;
+    let y = 60;
+    doc.setFontSize(20);
+    doc.text('SkySwift — E‑Ticket', left, y);
+    y += 28;
+
+    doc.setFontSize(11);
+    doc.text(`PNR: ${order.pnr}`, left, y); y += 16;
+    doc.text(`Passenger: ${order.passenger?.fn || ''} ${order.passenger?.ln || ''}`, left, y); y += 14;
+    if(order.passenger?.em) { doc.text(`Email: ${order.passenger.em}`, left, y); y += 14; }
+    doc.text(`Route: ${order.from} → ${order.to}`, left, y); y += 14;
+    doc.text(`Flight: ${order.airline} ${order.flightNo}`, left, y); y += 14;
+    doc.text(`Date: ${order.date}   Time: ${order.depart} → ${order.arrival}`, left, y); y += 14;
+    const seatsText = (order.seats && order.seats.length) ? order.seats.join(', ') : 'Auto-assigned';
+    doc.text(`Seats: ${seatsText}`, left, y); y += 16;
+    if(order.cabin) { doc.text(`Cabin: ${order.cabin}`, left, y); y += 14; }
+    doc.text(`Total Fare: ${order.total ? '₹' + order.total.toLocaleString('en-IN') : ''}`, left, y); y += 26;
+
+    // Add QR on the right
+    const qrX = 400; const qrY = 90; const qrSize = 120;
+    // addImage: (imageData, format, x, y, width, height)
+    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+
+    doc.setFontSize(10);
+    doc.text('Generated by SkySwift demo. This is an auto-generated ticket.', left, y);
+
+    // Save PDF
+    doc.save(`Ticket_${order.pnr}.pdf`);
+  } catch (e) {
+    console.error('generateTicketPDF error', e);
+    alert('Failed to generate PDF ticket. See console for details.');
+  }
+}
+
+// add Download button on confirmation screen (if not present)
+function ensureDownloadButton() {
+  try {
+    const conf = document.getElementById('confirmation');
+    if(!conf) return;
+    if(document.getElementById('downloadTicketBtn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'downloadTicketBtn';
+    btn.className = 'btn';
+    btn.style.marginTop = '12px';
+    btn.textContent = 'Download Ticket (PDF)';
+    btn.onclick = function(){
+      // use store.order if available
+      const order = window.store && window.store.order ? window.store.order : window.order || null;
+      if(!order) {
+        // try to read from localStorage last trip
+        const trips = JSON.parse(localStorage.getItem('skyswift_trips')||'[]');
+        const last = trips[trips.length-1];
+        if(last) generateTicketPDF(last);
+        else alert('No booking found to download.');
+        return;
+      }
+      generateTicketPDF(order);
+    };
+    // place button inside confirmation card
+    const card = conf.querySelector('.card');
+    if(card) card.appendChild(btn);
+  } catch(e){ console.warn(e); }
+}
+
+// Ensure button exists when confirmation page is shown
+document.addEventListener('click', function(e){
+  // if navTo called with '#confirmation', ensure button
+  if(e.target && e.target.getAttribute && e.target.getAttribute('href') === '#confirmation') {
+    setTimeout(ensureDownloadButton, 120);
+  }
+});
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(ensureDownloadButton, 400);
+});
+
+// also call generateTicketPDF automatically when booking completes -- patch existing navTo call if needed
+// (Some existing code already attempts to call it; this is a safe double-call guard)
+</script>
+
+</body></section>
+<!-- SUPPORT (Static content) -->
+<section id="support" style="display:none">
+<div class="card">
+<h3>Support</h3>
+<p class="sub">Reach us 24×7 at support@skyswift.test or +91‑00000‑00000. For refunds, cancellations or reschedules, open your trip and choose an action.</p>
+<ul>
+<li>Free cancellation within 24 hours for flights ≥ 7 days away.</li>
+<li>Partial refunds depend on airline policy and fare type.</li>
+<li>Reschedule fee = airline fee + ₹300 service charge.</li>
+</ul>
+</div>
+</section>
+<section class="page hidden" id="whybook">
+<div class="card">
+<h2>Why Book With Us?</h2>
+<ul>
+<li><h3>✨ Exciting deals on flights and hotels.</h3></li>
+<p>Get access to exclusive flight discounts that you won't find anywhere else.
+        We bring you seasonal offers, festive sales and special promo codes to help you save more on every booking.
+      </p>
+<li><h3>📞 24/7 support for all your bookings.</h3></li>
+<p>Our travel experts are available around the clock to assist you.
+        Whether it's a booking help, last-minute changes, or travel queries- we are always just a call or a chat away.
+      </p>
+<li><h3>⚡ Instant refunds on eligible cancellations.</h3></li>
+<p>Enjoy hassle-free cancellations with instant refunds on eligible bookings.
+        No more waiting for days- we ensure your money comes back to you quickly and securely.
+      </p>
+<li><h3>💸 Lowest price guarantee on flights &amp; packages.</h3></li>
+<p>We compare prices across airlines to give you the best deals.
+        If you find a cheaper price elsewhere, we'll match it so you always travel at the lowest cost.
+      </p>
+<li><h3>👌 Easy booking experience with trusted reviews.</h3></li>
+<p>Book your flights in just a few clicks with our user-friendly platfrom.
+        With thousands of trusted reviews, you can travel with confidence knowing you made the right choice..
+      </p>
+</ul>
+</div>
+</section>
+
+<!-- Terms(Static content) -->
+    <section id="terms" style="display:none">
+      <div class="card">
+        <h3>Terms</h3>
+        <p class="sub">The airline tickets available through the Website are subject to the terms & conditions of the concerned airline, including but not limited to cancellation and refund policies.
+</p>
+        <ul>
+          <li>SkySwift merely acts as a facilitator to enable the User to book a flight ticket. The contract of service for utilization of the flight is always between the User and the concerned airline.
+Airlines retain the right to reschedule flight times, route, change or cancel flights or itineraries independent of and without prior intimation to SkySwift. As a facilitator SkySwift has no control or authority over the logistics of the airlines and therefore is not liable for any loss, direct or incidental, that a User may incur due to such change or cancellation of a flight.</li>
+          <li>The baggage allowance on given fare is as per the terms decided by the airline, and SkySwift has no role to play in the same. Some of the fares shown in the booking flow are "hand baggage fares" which do not entitle the User for free check in baggage and therefore the User will be required to pay separately for check in baggage. The prices for adding check-in baggage to a booking may vary from airline to airline. The User is advised to contact the airlines for detailed costs.</li>
+          <li>Some airlines enter into "code share" agreements with other Airlines. This means that on certain routes, the airline carrier selling or marketing the flight ticker does not fly its own aircraft to that destination. Instead, it contracts or partners with another airline to fly to that destination. The partner airline is listed as "operated by" in the booking flow.
+            <li>The total price displayed on the Website on the payment page usually includes base fare, applicable government taxes and convenience fee. Users are required to pay the entire amount prior to the confirmation of their booking(s). In the event the User does not pay the entire amount, SkySwift reserves its right to cancel the booking. User agrees to pay all statutory taxes, surcharges and fees, as applicable on the date of travel.</li>
+If your flight is a code share, it will be disclosed to you in the booking process and prior to your payment.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PRIVACY(Static Content)-->
+     <section id="privacy" style="display:none">
+      <div class="card">
+        <h3>Privacy</h3>
+        <p class="sub"></p>
+        <ol>
+          <li>SkySwift recognizes the importance of privacy of its users and also of maintaining confidentiality of the information provided by its users as a responsible data controller and data processer.This Privacy Policy provides for the practices for handling and securing user's Personal Information (defined hereunder) by FlyMate and its subsidiaries and affiliates.</li>
+          <li>This Privacy Policy is applicable to any person (‘User’) who purchase, intend to purchase, or inquire about any product(s) or service(s) made available by MMT through any of SkySwift customer interface channels including its website, mobile site, mobile app & offline channels including call centers and offices (collectively referred herein as "Sales Channels").For the purpose of this Privacy Policy , wherever the context so requires "you" or "your" shall mean User and the term "we", "us", "our" shall mean FlyMate. For the purpose of this Privacy Policy, Website means the webs</li>
+          <li>By using or accessing the Website or other Sales Channels, the User hereby agrees with the terms of this Privacy Policy and the contents herein. If you disagree with this Privacy Policy please do not use or access our Website or other Sales Channels.This Privacy Policy does not apply to any website(s), mobile sites and mobile apps of third parties, even if their websites/products are linked to our Website. User should take note that information and privacy practices of SkySwift business partners, advertisers, sponsors or other sites to which SkySwift provides hyperlink(s), may be materially different from this Privacy Policy. Accordingly, it is recommended that you review the privacy statements and policies of any such third parties with whom they interact.This Privacy Policy is an integral part of your User Agreement with SlySwift and all capitalized terms used, but not otherwise defined herein, shall have the respective meanings as ascribed to them in the User Agreement.</li>
+        </ol>
+        </div>
+    </section>
+<section class="page hidden" id="reviews">
+<div class="card">
+<h2>Customer Reviews</h2>
+<p>⭐ Rated Excellent by thousands of happy travelers.</p>
+<ul>
+<li>“Super easy to book, got the cheapest flights!” – Rahul M.</li>
+<li>“Refund was processed in just 2 days.” – Aditi S.</li>
+<li>“Best customer support experience ever.” – Arjun K.</li>
+<li>"I had booked a ticket through SkySwift and I cancelled the same because I had the wrong date! I was upset about cancellation fees and i have expressed my frustation to them directly and also through a negative review over trust pilot." - Dr. Babu George</li>
+<li>"Very quick and positive attitude helpful nature kept their words which matters the most" - Arshad Ahmad</li>
+<li>"Excellent Stay and Peaceful environment friendly staff's Mr. Srikanth and Team is very friendly and helpful 👍" -Dr. Rahul Gupta</li>
+</ul>
+</div>
+</section>
+</main>
+<footer>
+<div class="container" style="display:flex;gap:20px;justify-content:space-between;align-items:center;flex-wrap:wrap">
+<span>© <span id="year"></span> SkySwift Pvt Ltd</span>
+<div style="display:flex;gap:12px;flex-wrap:wrap">
+<a data-link="" href="#support">Contact</a>
+<a href="#terms" data-link>Terms</a>
+ <a href="#privacy" data-link>Privacy</a>
+</div>
+</div>
+</footer>
+<div aria-live="polite" class="toast" id="toast" role="status"></div>
+<script>
+  // Replace these with your credentials
+const correctEmail = "prachigarg1511@gmail.com";
+const correctPassword = "123456";
+
+// Login function
+function login() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  if(email === correctEmail && password === correctPassword) {
+    localStorage.setItem("isLoggedIn", "true");
+    document.getElementById("loginOverlay").style.display = "none";
+    document.getElementById("mainContent").style.display = "block"; // show project
+  } else {
+    alert("Incorrect email or password!");
+  }
+}
+
+// Logout function
+function logout() {
+  localStorage.removeItem("isLoggedIn");
+  location.reload();
+}
+
+// Check login status on page load
+window.onload = function() {
+  if(localStorage.getItem("isLoggedIn") === "true") {
+    document.getElementById("loginOverlay").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+  } else {
+    document.getElementById("loginOverlay").style.display = "flex";
+    document.getElementById("mainContent").style.display = "none";
+  }
+}
+  // ======= UTIL =======
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const fmtTime = (t) => t.padStart(5,'0');
+  const fmtINR = (n) => `₹${n.toLocaleString('en-IN')}`;
+  const uid = () => Math.random().toString(36).slice(2,8).toUpperCase();
+  const showToast = (msg) => { const el = $('#toast'); el.textContent = msg; el.style.display='block'; setTimeout(()=> el.style.display='none', 2000) }
+  const navTo = (id) => { $$('main section').forEach(s=> s.style.display='none'); $(id).style.display='block';
+    $$('.navlinks a').forEach(a=> a.classList.toggle('active', a.getAttribute('href')===id));
+    history.replaceState(null, '', id);
+  };
+
+  // ======= STATE =======
+  const store = {
+    search: { from:'Delhi (DEL)', to:'Mumbai (BOM)', depart:'', ret:'', pax:1, cabin:'Economy' },
+    flights: [],
+    selected:null, // flight
+    seats:new Set(),
+    addons:{ bag:false, meal:false },
+    passenger:{fn:'',ln:'',em:'',ph:''},
+    order:null,
+  };
+
+  // ======= MOCK DATA =======
+  const AIRLINES = ['IndiGo','Air India','Vistara','Akasa Air','SpiceJet'];
+  const DURATIONS = [95, 110, 120, 130, 150, 165]; // in minutes
+  function genFlights(from, to, date){
+    const list = [];
+    for(let i=0;i<14;i++){
+      const airline = AIRLINES[Math.floor(Math.random()*AIRLINES.length)];
+      const base = 3000 + Math.floor(Math.random()*12000);
+      const stops = Math.random() < 0.7 ? 0 : 1;
+      const departHour = 6 + Math.floor(Math.random()*14);
+      const departMin = ['00','15','30','45'][Math.floor(Math.random()*4)];
+      const duration = DURATIONS[Math.floor(Math.random()*DURATIONS.length)] + (stops?60:0);
+      const price = base + (stops?800:0);
+      const flightNo = airline.slice(0,2).toUpperCase() + (100 + Math.floor(Math.random()*900));
+      list.push({
+        id: uid(), airline, flightNo, from, to, date, depart:`${String(departHour).padStart(2,'0')}:${departMin}`,
+        arrival: (()=>{ const d = new Date(`${date}T${String(departHour).padStart(2,'0')}:${departMin}:00`); d.setMinutes(d.getMinutes()+duration); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` })(),
+        duration, stops, price
+      });
+    }
+    return list;
+  }
+
+  // ======= RENDER HELPERS =======
+  function renderTrending(){
+    const today = new Date(); const date = today.toISOString().slice(0,10);
+    const routes = [
+      ['Delhi (DEL)','Mumbai (BOM)'],
+      ['Bengaluru (BLR)','Delhi (DEL)'],
+      ['Mumbai (BOM)','Goa (GOI)'],
+      ['Chennai (MAA)','Hyderabad (HYD)'],
+      ['Chennai (MAA)','Delhi (DEL)'],
+      ['Delhi (DEL)', 'Goa (GOI)'],
+      ['Jaipur (JAI)','Lucknow (LKO)'],
+      ['Varanasi (VNS)', 'Udaipur (UDR)'],
+      ['Ayodhya (AYJ)', 'Jodhpur (JDH)'],
+      ['Chandigarh (IXC)','Shimla (SLV)'],
+      ['Chandigarh(IXC)', 'Adampur (AIP)'],
+      ['Mumbai (BOM)', 'Bengaluru (BlR)']
+    ];
+    $('#trending').innerHTML = routes.map(([from,to])=>{
+      const f = genFlights(from,to,date)[0];
+      return `<div class="result">
+        <div class="meta"><div class="avatar">✈️</div>
+          <div><div><b>${from}</b> → <b>${to}</b></div>
+          <div class="dim">${f.airline} • ${f.depart} → ${f.arrival} • ${minsToH(f.duration)} • ${f.stops? '1 stop':'non‑stop'}</div></div>
+        </div>
+        <div class="dim">${date}</div>
+        <div class="price">${fmtINR(f.price)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function minsToH(m){ const h=Math.floor(m/60), r=m%60; return `${h}h ${String(r).padStart(2,'0')}m`; }
+
+  function renderAirlineChips(){
+    const wrap = $('#airlines');
+    wrap.innerHTML = AIRLINES.map(a=>`<button class="airline" data-airline="${a}">${a}</button>`).join('');
+    wrap.addEventListener('click', (e)=>{
+      if(e.target.matches('.airline')){ e.target.classList.toggle('active'); applyFilters(); }
+    })
+  }
+
+  function renderResults(){
+    const list = $('#resultsList');
+    list.innerHTML = store.flights.map(f=>`<div class="result" data-id="${f.id}">
+      <div class="meta"><div class="avatar">${f.airline.charAt(0)}</div>
+        <div>
+          <div class="t">${f.depart} → ${f.arrival}</div>
+          <div class="dim">${f.airline} • ${f.flightNo} • ${minsToH(f.duration)} • ${f.stops? '1 stop':'non‑stop'}</div>
+        </div>
+      </div>
+      <div class="dim">${store.search.date || store.search.depart}</div>
+      <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end">
+        <div class="price">${fmtINR(f.price)}</div>
+        <button class="btn" data-pick>Choose</button>
+      </div>
+    </div>`).join('');
+  }
+
+  function applyFilters(){
+    const after = Number($('#depRange').value);
+    $('#depAfter').textContent = `${String(after).padStart(2,'0')}:00`;
+    const nonstop = $('#nonstop').checked;
+    const maxP = Number($('#priceMax').value); $('#priceMaxVal').textContent = maxP.toLocaleString('en-IN');
+    const selectedAirlines = $$('.airline.active').map(b=> b.dataset.airline);
+
+    let filtered = store.flights.filter(f=> Number(f.depart.slice(0,2))>=after && f.price<=maxP);
+    if(nonstop) filtered = filtered.filter(f=> f.stops===0);
+    if(selectedAirlines.length) filtered = filtered.filter(f=> selectedAirlines.includes(f.airline));
+
+    // sort
+    const by = $('#sort').value;
+    if(by==='price') filtered.sort((a,b)=> a.price-b.price);
+    else if(by==='duration') filtered.sort((a,b)=> a.duration-b.duration);
+    else if(by==='depart') filtered.sort((a,b)=> a.depart.localeCompare(b.depart));
+    else filtered.sort((a,b)=> (a.stops - b.stops) || (a.duration - b.duration) || (a.price - b.price));
+
+    $('#resultsList').innerHTML = filtered.map(f=>`<div class="result" data-id="${f.id}">
+      <div class="meta"><div class="avatar">${f.airline.charAt(0)}</div>
+        <div>
+          <div class="t">${f.depart} → ${f.arrival}</div>
+          <div class="dim">${f.airline} • ${f.flightNo} • ${minsToH(f.duration)} • ${f.stops? '1 stop':'non‑stop'}</div>
+        </div>
+      </div>
+      <div class="dim">${store.search.date || store.search.depart}</div>
+      <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end">
+        <div class="price">${fmtINR(f.price)}</div>
+        <button class="btn" data-pick>Choose</button>
+      </div>
+    </div>`).join('');
+  }
+
+  function renderSummary(sidebar){
+    const s = store.selected;
+    const extras = (store.addons.bag?500:0) + (store.addons.meal?250:0);
+    const seats = Array.from(store.seats).sort().join(', ') || 'Not selected';
+    sidebar.innerHTML = `
+      <h3>Trip summary</h3>
+      <div class="row"><div>
+        <div><b>${s.from}</b> → <b>${s.to}</b></div>
+        <div class="dim">${s.airline} • ${s.flightNo} • ${minsToH(s.duration)} • ${s.stops? '1 stop':'non‑stop'}</div>
+        <div class="dim">Depart ${store.search.date || store.search.depart} at ${s.depart}</div>
+      </div>
+      <div class="price">${fmtINR(s.price)}</div></div>
+      <hr style="border-color:var(--hair);opacity:.5">
+      <div class="row">
+        <div>Seats <span class="dim">(${seats})</span></div>
+        <div>${store.seats.size? fmtINR(0): '—'}</div>
+      </div>
+      <div class="row"><div>Extra baggage</div><div>${store.addons.bag? fmtINR(500): '—'}</div></div>
+      <div class="row"><div>Meal</div><div>${store.addons.meal? fmtINR(250): '—'}</div></div>
+      <div class="row total"><div>Total</div><div>${fmtINR(s.price + extras)}</div></div>
+    `;
+  }
+
+  function renderSeatMap(){
+    const wrap = $('#seatMap');
+    const seats = [];
+    for(let r=1;r<=10;r++){
+      for(let c of 'ABCDEF'){
+        seats.push(r + c);
+      }
+    }
+    wrap.innerHTML = seats.map(code=>{
+      const taken = Math.random()<.18; // some taken
+      return `<button class="seat ${taken?'taken':''}" data-seat="${code}" ${taken?'disabled':''} aria-label="Seat ${code}">${code}</button>`
+    }).join('');
+  }
+
+  function renderTrips(){
+    const trips = JSON.parse(localStorage.getItem('skyswift_trips')||'[]');
+    const list = $('#tripsList');
+    if(!trips.length){ list.innerHTML = `<div class="dim">No trips yet.</div>`; return }
+    list.innerHTML = trips.map(t=>`<div class="result">
+      <div class="meta"><div class="avatar">✈️</div>
+        <div>
+          <div class="t">${t.from} → ${t.to}</div>
+          <div class="dim">${t.airline} • ${t.flightNo} • ${t.date} ${t.depart}</div>
+        </div>
+      </div>
+      <div class="price">${fmtINR(t.total)}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost" data-view="${t.pnr}">View</button>
+        <button class="btn" data-cancel="${t.pnr}">Cancel</button>
+      </div>
+    </div>`).join('');
+  }
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.add('hidden');
+  });
+  document.getElementById(pageId).classList.remove('hidden');
+}
+
+// Handle Clicks
+document.querySelectorAll('[data-link]').forEach(link=> {link.addEventListener('click',e=>{
+    e.preventDefault();
+    const pageId=link.getAttribute('href').substring(1);
+    showPage(pageId);
+});
+});
+
+// Deep link on load
+window.addEventListener('DOMContentLoaded', ()=>{const hash=location.hash || '#home';
+    showPage(hash.substring(1));
+})
+
+function openLogin() {
+  document.getElementById("loginModal").style.display = "flex";
+}
+
+function closeLogin() {
+  document.getElementById("loginModal").style.display = "none";
+}
+
+// Close when clicking outside modal
+window.onclick = function(event) {
+  let modal = document.getElementById("loginModal");
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+
+// ======= EVENTS =======
+  $('#year').textContent = new Date().getFullYear();
+  renderTrending();
+  renderAirlineChips();
+
+  // Search submit
+  $('#searchForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const from = $('#from').value.trim();
+    const to = $('#to').value.trim();
+    const date = $('#depart').value || new Date().toISOString().slice(0,10);
+    store.search = {from,to,date,ret:$('#return').value, pax: Number($('#pax').value), cabin: $('#cabin').value};
+    store.flights = genFlights(from,to,date);
+    $('#searchHint').textContent = `${store.flights.length} options found — tweak filters to refine.`;
+    navTo('#results');
+    renderResults();
+    applyFilters();
+    showToast('Results updated');
+  });
+
+  // Filters & sort
+  $('#depRange').addEventListener('input', applyFilters);
+  $('#nonstop').addEventListener('change', applyFilters);
+  $('#priceMax').addEventListener('input', applyFilters);
+  $('#sort').addEventListener('change', applyFilters);
+
+  // Choose flight
+  $('#resultsList').addEventListener('click', (e)=>{
+    const pick = e.target.closest('[data-pick]');
+    const card = e.target.closest('.result');
+    if(pick && card){
+      const id = card.dataset.id;
+      store.selected = store.flights.find(f=> f.id===id);
+      renderSeatMap();
+      store.seats = new Set();
+      $('#bag').checked = $('#meal').checked = false; store.addons={bag:false,meal:false};
+      renderSummary($('#summary'));
+      navTo('#passengers');
+    }
+  });
+
+  // Seat selection
+  $('#seatMap').addEventListener('click', (e)=>{
+    if(!e.target.matches('.seat') || e.target.classList.contains('taken')) return;
+    const seat = e.target.dataset.seat;
+    if(store.seats.has(seat)){ store.seats.delete(seat); e.target.classList.remove('selected'); }
+    else { store.seats.add(seat); e.target.classList.add('selected'); }
+    renderSummary($('#summary'));
+  });
+
+  // Addons
+  $('#bag').addEventListener('change', (e)=> { store.addons.bag = e.target.checked; renderSummary($('#summary')) });
+  $('#meal').addEventListener('change', (e)=> { store.addons.meal = e.target.checked; renderSummary($('#summary')) });
+
+  // Navigation
+  $('#backToResults').addEventListener('click', ()=> navTo('#results'));
+
+  $('#toPayment').addEventListener('click', ()=>{
+    // simple validation
+    const required = ['#fn','#ln','#em'];
+    for(const sel of required){ if(!$(sel).value.trim()){ showToast('Please complete passenger details'); return } }
+    store.passenger = { fn:$('#fn').value.trim(), ln:$('#ln').value.trim(), em:$('#em').value.trim(), ph:$('#ph').value.trim() };
+    renderSummary($('#paySummary'));
+    navTo('#payment');
+  });
+
+  $('#backToPassengers').addEventListener('click', ()=> navTo('#passengers'));
+
+  // Payment
+  $('#payNow').addEventListener('click', ()=>{
+    if(!$('#tnc').checked){ showToast('Please accept terms & refund policy'); return }
+    // rudimentary card checks
+    if(!$('#ch').value || $('#cn').value.replace(/\s/g,'').length < 12){ showToast('Enter a valid card'); return }
+
+    const extras = (store.addons.bag?500:0) + (store.addons.meal?250:0);
+    const total = store.selected.price + extras;
+    const pnr = uid();
+    const order = { pnr, ...store.selected, date: store.search.date, total, passenger: store.passenger, seats: Array.from(store.seats) };
+    store.order = order;
+
+    // persist
+    const trips = JSON.parse(localStorage.getItem('skyswift_trips')||'[]');
+    trips.push(order); localStorage.setItem('skyswift_trips', JSON.stringify(trips));
+
+    // confirmation
+    $('#confDetails').innerHTML = `
+      <div class="card" style="text-align:left">
+        <div class="row">
+          <div><b>${order.from}</b> → <b>${order.to}</b><div class="dim">${order.date} • ${order.depart} → ${order.arrival}</div></div>
+          <div class="price">${fmtINR(order.total)}</div>
+        </div>
+        <div class="row">
+          <div><b>Passenger</b><div class="dim">${order.passenger.fn} ${order.passenger.ln} • ${order.passenger.em}</div></div>
+          <div><b>PNR</b><div>${order.pnr}</div></div>
+        </div>
+        <div><b>Seats</b><div class="dim">${order.seats.join(', ') || 'Auto‑assigned at check‑in'}</div></div>
+      </div>`;
+
+    navTo('#confirmation');
+  });
+
+  // Trips actions
+  $('#tripsList').addEventListener('click', (e)=>{
+    const cancel = e.target.closest('[data-cancel]');
+    const view = e.target.closest('[data-view]');
+    const trips = JSON.parse(localStorage.getItem('skyswift_trips')||'[]');
+    if(cancel){
+      const pnr = cancel.getAttribute('data-cancel');
+      const idx = trips.findIndex(t=> t.pnr===pnr);
+      if(idx>-1){ trips.splice(idx,1); localStorage.setItem('skyswift_trips', JSON.stringify(trips)); renderTrips(); showToast('Trip cancelled'); }
+    }
+    if(view){
+      const pnr = view.getAttribute('data-view');
+      const t = trips.find(t=> t.pnr===pnr);
+      if(t){
+        store.selected = t; store.search.date = t.date; renderSummary($('#summary'));
+        $('#fn').value = t.passenger.fn; $('#ln').value = t.passenger.ln; $('#em').value = t.passenger.em; $('#ph').value = t.passenger.ph || '';
+        navTo('#passengers');
+      }
+    }
+     });
+
+  // Basic router for top nav links
+  document.addEventListener('click', (e)=>{
+    const link = e.target.closest('[data-link]');
+    if(link){ e.preventDefault(); const tgt = link.getAttribute('href'); navTo(tgt); if(tgt==='#mytrips') renderTrips(); }
+  });
+
+  // Theme toggle (demo)
+  $('#btnTheme').addEventListener('click', ()=>{
+    document.documentElement.classList.toggle('light');
+    if(document.documentElement.classList.contains('light')){
+      // light palette
+      document.documentElement.style.setProperty('--bg','#f5f7ff');
+      document.documentElement.style.setProperty('--bg-soft','#ffffff');
+      document.documentElement.style.setProperty('--ink','#0f1830');
+      document.documentElement.style.setProperty('--muted','#5a6aa3');
+      document.documentElement.style.setProperty('--hair','#e6e9f6');
+      document.documentElement.style.setProperty('--chip','#f0f3ff');
+    } else {
+      // back to dark
+      document.documentElement.style.setProperty('--bg','#0b1221');
+      document.documentElement.style.setProperty('--bg-soft','#121a2d');
+      document.documentElement.style.setProperty('--ink','#e6ebff');
+      document.documentElement.style.setProperty('--muted','#a5b3d9');
+      document.documentElement.style.setProperty('--hair','#223055');
+      document.documentElement.style.setProperty('--chip','#1a2542');
+    }
+  });
+
+  // Deep link on load
+  window.addEventListener('DOMContentLoaded', ()=>{
+    const hash = location.hash || '#home';
+    navTo(hash);
+    if(hash==='#mytrips') renderTrips();
+  });
+
+  // script.js - SkySwift Assistant (All features)
+// Requires jsPDF & qrious included in index.html via CDN
+
+/* ---------------------
+   Storage & State
+   --------------------- */
+const STORAGE = 'skyswift_bookings_v3';
+let bookings = JSON.parse(localStorage.getItem(STORAGE) || '[]');
+let loyaltyPoints = parseInt(localStorage.getItem('skyswift_points') || '0', 10) || 0;
+window._seatMap = JSON.parse(localStorage.getItem('skyswift_seats') || '{}'); // seat occupancy map
+
+/* ---------------------
+   DOM refs
+   --------------------- */
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const send = document.getElementById('send');
+
+const upiModal = document.getElementById('upiModal');
+const upiQR = document.getElementById('upiQR');
+const upiInfo = document.getElementById('upiInfo');
+const upiCancel = document.getElementById('upiCancel');
+const upiPaid = document.getElementById('upiPaid');
+
+const paymentModal = document.getElementById('paymentModal');
+const paymentTitle = document.getElementById('paymentTitle');
+const paymentBody = document.getElementById('paymentBody');
+const payCancel = document.getElementById('payCancel');
+const payProceed = document.getElementById('payProceed');
+
+/* ---------------------
+   Helpers: chat UI
+   --------------------- */
+function bot(msg, opts={}) {
+  const d = document.createElement('div');
+  d.className = 'message bot';
+  d.innerHTML = msg.replace(/\n/g,'<br>');
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  if(opts.quick) renderQuick(opts.quick);
+}
+function userMsg(text){
+  const d = document.createElement('div');
+  d.className = 'message user';
+  d.textContent = text;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+function renderQuick(options){
+  // options: array of {label, cmd}
+  const container = document.createElement('div'); container.className='quick-row';
+  options.forEach(o=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=o.label;
+    b.onclick = ()=>{ userMsg(o.label); handleInput(o.cmd); };
+    container.appendChild(b);
+  });
+  chat.appendChild(container);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+/* ---------------------
+   Initial Menu (1-9 + extras)
+   --------------------- */
+function showMenu(){
+  bot(
+`👋 Welcome to ✈️ <strong>SkySwift</strong> — your virtual assistant!
+
+✨ Core Options:
+1️⃣ Book a Flight ✈️
+2️⃣ Cancel a Flight ❌ (type: cancel T1234)
+3️⃣ Where is my Flight 🛰️ (type: status T1234 or flight id)
+4️⃣ Delay a Flight ⏱️ (type: delay FLT123)
+5️⃣ Reschedule 🔄 (type: reschedule T1234)
+6️⃣ View My Bookings 📑
+7️⃣ Baggage Info 🧳
+8️⃣ Refund Policy 💵
+9️⃣ Check-in Info 🛄
+
+🌟 Extras:
+🔟 Contact Support 📞   🌦️ Weather (weather &lt;city&gt;)
+🎟️ Apply Promo Code  🏅 Loyalty Points
+💼 Extra baggage & insurance
+💳 Payment methods & QR for UPI
+🎯 Seat map selection (visual)
+
+👉 Type a number (1–9) or a command (book, view, cancel T1234, promo, help).`,
+{quick:[
+  {label:'1️⃣ Book a Flight', cmd:'book'},
+  {label:'6️⃣ View My Bookings', cmd:'view'},
+  {label:'7️⃣ Baggage Info', cmd:'baggage'},
+  {label:'🎟️ Promo', cmd:'promo'}
+]});
+}
+showMenu();
+
+/* ---------------------
+   Core input handling
+   --------------------- */
+send.addEventListener('click', ()=>{ handleInput(input.value.trim()); input.value=''; input.focus(); });
+input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); send.click(); } });
+
+function handleInput(raw){
+  if(!raw) return;
+  userMsg(raw);
+  const text = raw.trim();
+
+  // booking flow has priority (awaiting variable)
+  if(awaitingStep) { handleBookingFlow(text); return; }
+
+  const cmd = text.toLowerCase();
+  if(cmd === 'help' || cmd === 'menu'){ showMenu(); return; }
+  if(cmd === '1' || cmd === 'book'){ startBooking(); return; }
+  if(cmd.startsWith('cancel ')){ const id = cmd.split(/\s+/)[1]; cancelTicket(id?.toUpperCase()); return; }
+  if(cmd === '2' || cmd.startsWith('cancel')){ bot('To cancel, type: cancel T1234'); return; }
+  if(cmd === '3' || cmd.startsWith('status') || cmd.includes('where is my flight')){ const id = cmd.split(/\s+/).slice(-1)[0]; whereIsFlight(id || 'FLIGHT1'); return; }
+  if(cmd === '4' || cmd.startsWith('delay')){ const id = cmd.split(/\s+/)[1] || prompt('Enter flight id to delay:'); if(id) bot(`⏱️ Flight ${id} delayed (simulated).`); return; }
+  if(cmd === '5' || cmd.startsWith('reschedule')){ const id = cmd.split(/\s+/)[1] || prompt('Enter ticket id to reschedule:'); if(id) reschedule(id.toUpperCase()); return; }
+  if(cmd === '6' || cmd.includes('view')){ showBookings(); return; }
+  if(cmd === '7' || cmd.includes('baggage')){ showBaggage(); return; }
+  if(cmd === '8' || cmd.includes('refund')){ showRefund(); return; }
+  if(cmd === '9' || cmd.includes('check-in')){ showCheckin(); return; }
+  if(cmd.startsWith('weather ')){ const city = text.split(' ').slice(1).join(' '); fetchWeather(city); return; }
+  if(cmd.includes('promo')){ bot('🎟️ Promo codes: FLY100 → ₹1000 off (apply during booking).'); return; }
+  if(cmd.includes('points') || cmd.includes('loyalty')){ bot(`🏅 You have ${loyaltyPoints} loyalty points.`); return; }
+  if(cmd.includes('support') || cmd.includes('contact')){ bot('📞 Support: 1800-123-456 | support@skyswift.example'); return; }
+
+  // special: select <flightId> <time> <date> for simulated flights (optional)
+  if(cmd.startsWith('select ')){ const parts = text.split(/\s+/).slice(1); selectFlight(parts); return; }
+
+  bot("⚠️ Command not recognized. Type 'help' to show the menu.");
+}
+
+/* ---------------------
+   Booking flow machine
+   --------------------- */
+let awaitingStep = null; // null or string naming step
+let draft = null;
+function startBooking(){
+  draft = {
+    ticketId: 'SKY' + Math.random().toString(36).slice(2,8).toUpperCase(),
+    passengerName: '', age:null, gender:'', health:'No', pregnancy:'No',
+    from:'', to:'', date:'', time:'', seats:1, seatsList:[], flightClass:'Economy',
+    extraBaggageKg:0, insurance:false, promo:'', amount:0, paymentMethod:'', paymentDetails:{},
+    transactionId:'', receiptId:''
+  };
+  bot('🛫 Booking — I will ask passenger details step-by-step.\nFirst: Passenger full name:');
+  awaitingStep = 'name';
+}
+function handleBookingFlow(text){
+  // each case populates draft and advances
+  const t = text.trim();
+  if(awaitingStep === 'name'){ if(!t){ bot('Please enter full name:'); return; } draft.passengerName = t; bot('Age (number):'); awaitingStep='age'; return; }
+  if(awaitingStep === 'age'){ const n=parseInt(t,10); if(!n){ bot('Enter valid age (number):'); return; } draft.age=n; bot('Gender (Male/Female/Other):'); awaitingStep='gender'; return; }
+  if(awaitingStep === 'gender'){ draft.gender = t || 'Other'; bot('Any health conditions? (No or describe)'); awaitingStep='health'; return; }
+  if(awaitingStep === 'health'){ draft.health = t || 'No'; bot('Is the passenger pregnant? (Yes/No)'); awaitingStep='pregnancy'; return; }
+  if(awaitingStep === 'pregnancy'){ draft.pregnancy = /^y/i.test(t)? 'Yes':'No'; bot('Departure city:'); awaitingStep='from'; return; }
+  if(awaitingStep === 'from'){ draft.from = t || ''; bot('Destination city:'); awaitingStep='to'; return; }
+  if(awaitingStep === 'to'){ draft.to = t || ''; bot('Travel date (DD-MM-YYYY):'); awaitingStep='date'; return; }
+  if(awaitingStep === 'date'){ draft.date = t || ''; bot('Preferred departure time (HH:MM):'); awaitingStep='time'; return; }
+  if(awaitingStep === 'time'){ draft.time = t || ''; bot('How many seats? (number)'); awaitingStep='seats'; return; }
+  if(awaitingStep === 'seats'){ const s = parseInt(t,10) || 1; draft.seats = s; bot(`Choose class: Economy / Business / First`); awaitingStep='class'; return; }
+  
+  if(awaitingStep === 'payment'){
+    draft.paymentMethod = t;
+    draft.amount = 4500 + (Math.random()*2000|0); // mock amount
+    draft.transactionId = 'TXN' + Math.random().toString(36).slice(2,8).toUpperCase();
+    draft.pnr = 'PNR' + Math.random().toString(36).slice(2,8).toUpperCase();
+    bookings.push(draft);
+    localStorage.setItem(STORAGE, JSON.stringify(bookings));
+    bot(`✅ Booking confirmed!\nPNR: ${draft.pnr}\nAmount: ₹${draft.amount}\nTransaction: ${draft.transactionId}`);
+    bot(`<button class="btn" onclick="generateTicketPDF(${JSON.stringify(draft)})">🧾 Download Ticket (PDF)</button>`);
+    awaitingStep = null;
+    draft = null;
+    return;
+  }
+
+  if(awaitingStep === 'class'){ draft.flightClass = t || 'Economy';
+    // compute base amount per seat
+    let base = 4000;
+    if(/business/i.test(draft.flightClass)) base = Math.round(base * 1.6);
+    if(/first/i.test(draft.flightClass)) base = Math.round(base * 2.6);
+    draft.amount = base * draft.seats;
+    bot(`Estimated fare ₹${draft.amount}. Extra baggage? (Yes/No)`); awaitingStep='extraBaggageQuery'; return;
+  }
+  if(awaitingStep === 'extraBaggageQuery'){
+    if(/^y/i.test(t)){ bot('Enter extra baggage in kg (number):'); awaitingStep='extraBaggage'; }
+    else { draft.extraBaggageKg = 0; bot('Add travel insurance for ₹500? (Yes/No)'); awaitingStep='insurance'; }
+    return;
+  }
+  if(awaitingStep === 'extraBaggage'){
+    const kg = parseInt(t,10) || 0; draft.extraBaggageKg = kg;
+    const fee = Math.ceil(kg/5) * 500; draft.amount += fee;
+    bot(`Added extra baggage fee ₹${fee}. Add travel insurance for ₹500? (Yes/No)`); awaitingStep='insurance'; return;
+  }
+  if(awaitingStep === 'insurance'){
+    draft.insurance = /^y/i.test(t);
+    if(draft.insurance) draft.amount += 500;
+    bot('Have a promo code? (type code or no)'); awaitingStep='promo'; return;
+  }
+  if(awaitingStep === 'promo'){
+    if(t && t.toUpperCase()==='FLY100'){ draft.promo='FLY100'; draft.amount = Math.max(0, draft.amount - 1000); bot('Promo applied: ₹1000 off!'); }
+    bot(`Total payable: ₹${draft.amount}. Choose payment method:\nPaytm / HDFC Debit Card / Credit Card / UPI / Bank Transfer`);
+    awaitingStep='paymentMethod';
+    return;
+  }
+  if(awaitingStep === 'paymentMethod'){
+    draft.paymentMethod = t;
+    // route to specific payment UI
+    handlePaymentChoice(t);
+    return;
+  }
+
+  // if seats modal was open before, confirmation handled elsewhere
+}
+
+/* ---------------------
+   Seat selection (inline)
+   --------------------- */
+function openSeatGridForSelection(){
+  // build seat grid inserted as bot message
+  const container = document.createElement('div'); container.className='message bot';
+  container.innerHTML = `<div><strong>Select ${draft.seats} seat(s)</strong></div>`;
+  const grid = document.createElement('div'); grid.className='seat-grid';
+  const flightKey = `${draft.from}|${draft.to}|${draft.date}|${draft.time}`;
+  const bookedSet = new Set(window._seatMap[flightKey] || []);
+  for(let i=1;i<=36;i++){
+    const seat = document.createElement('div'); seat.className='seat'; seat.textContent = i;
+    if(bookedSet.has(i)) seat.classList.add('booked');
+    seat.onclick = ()=>{
+      if(seat.classList.contains('booked')) return;
+      if(seat.classList.contains('selected')) { seat.classList.remove('selected'); }
+      else {
+        const currently = grid.querySelectorAll('.selected').length;
+        if(currently >= draft.seats){ alert(`You can select ${draft.seats}`); return; }
+        seat.classList.add('selected');
+      }
+    };
+    grid.appendChild(seat);
+  }
+  const confirm = document.createElement('button'); confirm.className='btn'; confirm.textContent='Confirm Seats';
+  confirm.style.marginTop='8px';
+  confirm.onclick = ()=>{
+    const selectedEls = Array.from(grid.querySelectorAll('.selected'));
+    if(selectedEls.length !== draft.seats){ alert(`Select exactly ${draft.seats} seat(s)`); return; }
+    draft.seatsList = selectedEls.map(el=>parseInt(el.textContent,10));
+    // mark seats booked
+    window._seatMap[flightKey] = (window._seatMap[flightKey] || []).concat(draft.seatsList);
+    localStorage.setItem('skyswift_seats', JSON.stringify(window._seatMap));
+    container.remove();
+    bot(`✅ Seats chosen: ${draft.seatsList.join(', ')}. Now choose payment method: Paytm / HDFC Debit Card / Credit Card / UPI / Bank Transfer`);
+    awaitingStep = 'paymentMethod';
+  };
+  container.appendChild(grid);
+  container.appendChild(confirm);
+  chat.appendChild(container);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+/* ---------------------
+   Payment flows
+   --------------------- */
+function handlePaymentChoice(methodText){
+  const m = methodText.toLowerCase();
+  if(m.includes('paytm')){
+    showPaymentModal('Paytm', `
+      <div class="field"><div class="label">Mobile (Paytm)</div><input id="pm_mobile" class="input-sm" placeholder="10-digit mobile" /></div>
+      <div class="small-muted">We'll simulate an OTP (enter 1234 to confirm).</div>
+    `, ()=>{
+      const mob=document.getElementById('pm_mobile').value.trim();
+      if(!/^\d{10}$/.test(mob)){ alert('Enter 10-digit mobile'); return false; }
+      const otp = prompt(`Simulated OTP sent to ${mob}. Enter OTP (type 1234):`);
+      if(otp !== '1234'){ alert('Invalid OTP (demo expects 1234)'); return false; }
+      draft.paymentDetails = {mobile:mob};
+      draft.paymentMethod = 'Paytm';
+      finalizeBookingAfterPayment();
+      return true;
+    });
+    return;
+  }
+
+  if(m.includes('hdfc') && m.includes('debit') || (m.includes('hdfc') && m.includes('card')) ){
+    showPaymentModal('HDFC Debit Card', `
+      <div class="field"><div class="label">Card Number</div><input id="card_num" class="input-sm" placeholder="5123 4567 8901 2345" maxlength="19"/></div>
+      <div class="field"><div class="label">Expiry (MM/YY)</div><input id="card_exp" class="input-sm" placeholder="08/26"/></div>
+      <div class="field"><div class="label">CVV</div><input id="card_cvv" class="input-sm" placeholder="3 digits" maxlength="4"/></div>
+      <div class="small-muted">This is simulated — do not enter real card details.</div>
+    `, ()=>{
+      const num=document.getElementById('card_num').value.replace(/\s+/g,'');
+      const exp=document.getElementById('card_exp').value.trim();
+      const cvv=document.getElementById('card_cvv').value.trim();
+      if(!/^\d{16}$/.test(num) || !/^\d{2}\/\d{2}$/.test(exp) || !/^\d{3,4}$/.test(cvv)){ alert('Enter simulated card details'); return false; }
+      // warn if BIN not expected
+      if(!num.startsWith('5123')){ if(!confirm('Card BIN not HDFC-like. Continue (simulated)?')) return false; }
+      draft.paymentDetails = {cardMasked:'**** **** **** ' + num.slice(-4), expiry:exp};
+      draft.paymentMethod = 'HDFC Debit Card';
+      finalizeBookingAfterPayment();
+      return true;
+    });
+    return;
+  }
+
+  if(m.includes('credit')){
+    showPaymentModal('Credit Card', `
+      <div class="field"><div class="label">Card Number</div><input id="cc_num" class="input-sm" placeholder="4111 1111 1111 1111" maxlength="19"/></div>
+      <div class="field"><div class="label">Expiry (MM/YY)</div><input id="cc_exp" class="input-sm" placeholder="08/26"/></div>
+      <div class="field"><div class="label">CVV</div><input id="cc_cvv" class="input-sm" placeholder="3 digits" maxlength="4"/></div>
+    `, ()=>{
+      const num=document.getElementById('cc_num').value.replace(/\s+/g,'');
+      const exp=document.getElementById('cc_exp').value.trim();
+      const cvv=document.getElementById('cc_cvv').value.trim();
+      if(!/^\d{13,19}$/.test(num) || !/^\d{2}\/\d{2}$/.test(exp) || !/^\d{3,4}$/.test(cvv)){ alert('Enter valid simulated credit card details'); return false; }
+      draft.paymentDetails = {cardMasked:'**** **** **** ' + num.slice(-4), expiry:exp};
+      draft.paymentMethod = 'Credit Card';
+      finalizeBookingAfterPayment();
+      return true;
+    });
+    return;
+  }
+
+  if(m.includes('upi')){
+    showUpiPayment('skyswift@upi', draft.amount, (paid)=>{
+      if(paid){ draft.paymentDetails = {upi:'skyswift@upi'}; draft.paymentMethod='UPI'; finalizeBookingAfterPayment(); }
+      else { bot('⚠️ UPI cancelled.'); }
+    });
+    return;
+  }
+
+  if(m.includes('bank') || m.includes('transfer')){
+    showPaymentModal('Bank Transfer', `
+      <div class="field"><div class="label">Account Number</div><input id="acc_num" class="input-sm" placeholder="123456789012" /></div>
+      <div class="field"><div class="label">IFSC</div><input id="ifsc" class="input-sm" placeholder="HDFC0001234" /></div>
+      <div class="small-muted">Transfer to: SkySwift Bank A/c 123456789012 IFSC HDFC0001234. Use your Ticket ID as reference. Mark as 'paid' when transfer is done.</div>
+    `, ()=>{
+      const acc=document.getElementById('acc_num').value.trim();
+      const ifsc=document.getElementById('ifsc').value.trim();
+      if(!/^\d{6,18}$/.test(acc)){ if(!confirm('Account looks unusual; proceed (simulated)?')) return false; }
+      draft.paymentDetails = {accountMasked:'xxxx' + acc.slice(-4), ifsc};
+      draft.paymentMethod = 'Bank Transfer';
+      draft.status = 'Payment Pending (Bank Transfer)';
+      bookings.push(draft); persist();
+      bot('⚠️ Bank transfer saved as pending. Please update status once transfer completes.');
+      draft = null; awaitingStep = null;
+      return true;
+    });
+    return;
+  }
+
+  bot('Please choose a valid payment method: Paytm / HDFC Debit Card / Credit Card / UPI / Bank Transfer');
+}
+
+/* Payment modal helper */
+function showPaymentModal(title, htmlContent, onProceed){
+  paymentTitle.textContent = title;
+  paymentBody.innerHTML = htmlContent;
+  paymentModal.classList.add('open');
+  paymentModal.setAttribute('aria-hidden','false');
+  payCancel.onclick = ()=>{ paymentModal.classList.remove('open'); paymentModal.setAttribute('aria-hidden','true'); bot('Payment cancelled.'); };
+  payProceed.onclick = ()=>{ try{ const ok = onProceed(); if(ok){ paymentModal.classList.remove('open'); paymentModal.setAttribute('aria-hidden','true'); } } catch(e){ alert(e.message); } };
+}
+
+/* UPI modal helper */
+function showUpiPayment(upiId, amount, callback){
+  upiModal.classList.add('open'); upiModal.setAttribute('aria-hidden','false');
+  const uri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=SkySwift&am=${amount}&cu=INR`;
+  new QRious({element: upiQR, value: uri, size:180});
+  upiInfo.textContent = `UPI ID: ${upiId} · Amount: ₹${amount}`;
+  upiCancel.onclick = ()=>{ upiModal.classList.remove('open'); upiModal.setAttribute('aria-hidden','true'); callback(false); };
+  upiPaid.onclick = ()=>{ upiModal.classList.remove('open'); upiModal.setAttribute('aria-hidden','true'); callback(true); };
+}
+
+/* ---------------------
+   finalize booking after payment
+   --------------------- */
+function finalizeBookingAfterPayment(){
+  draft.transactionId = 'TX' + Math.random().toString(36).slice(2,10).toUpperCase();
+  draft.receiptId = 'R' + Math.random().toString(36).slice(2,9).toUpperCase();
+  draft.paidAt = Date.now();
+  draft.status = draft.status || 'Confirmed';
+  bookings.push(draft);
+  // award points: 1 point per ₹1000
+  loyaltyPoints += Math.floor((draft.amount||0) / 1000);
+  localStorage.setItem('skyswift_points', String(loyaltyPoints));
+  persist();
+  bot(`✅ Booking confirmed!\nTicket: <strong>${draft.ticketId}</strong>\nPassenger: ${draft.passengerName}\nPaid: ₹${draft.amount}\nPayment: ${draft.paymentMethod}`);
+  showReceiptButtons(draft);
+  draft = null; awaitingStep = null;
+}
+
+/* show receipt download options */
+function showReceiptButtons(b){
+  const node = document.createElement('div'); node.className='receipt-box';
+  node.innerHTML = `<div><strong>Receipt</strong></div><div style="margin-top:8px">
+    <button class="chip" id="dlTxt">⬇️ TXT</button>
+    <button class="chip" id="dlPdf">⬇️ PDF</button>
+  </div>`;
+  chat.appendChild(node);
+  chat.scrollTop = chat.scrollHeight;
+  document.getElementById('dlTxt').onclick = ()=>downloadTxt(b);
+  document.getElementById('dlPdf').onclick = ()=>downloadPdf(b);
+}
+
+/* ---------------------
+   Utilities: bookings, cancel, reschedule, whereIs, etc.
+   --------------------- */
+function persist(){ localStorage.setItem(STORAGE, JSON.stringify(bookings)); }
+function showBookings(){
+  if(bookings.length === 0){ bot('📂 No bookings found (local).'); return; }
+  bookings.forEach(b=>{
+    bot(`📑 ${b.ticketId} · ${b.passengerName} · ${b.from || '-'}→${b.to || '-'} · ${b.date || '-'} · ${b.status}`);
+  });
+}
+function cancelTicket(id){
+  if(!id){ bot('Usage: cancel T1234'); return; }
+  const idx = bookings.findIndex(x=>x.ticketId === id || x.ticketId === id.toUpperCase());
+  if(idx === -1){ bot(`Ticket ${id} not found.`); return; }
+  bookings[idx].status = 'Cancelled';
+  persist();
+  bot(`✅ Ticket ${id} cancelled.`);
+}
+function reschedule(id){
+  if(!id){ bot('Usage: reschedule T1234'); return; }
+  const b = bookings.find(x=>x.ticketId === id || x.ticketId === id.toUpperCase());
+  if(!b){ bot(`Ticket ${id} not found.`); return; }
+  const newDate = prompt('Enter new date (DD-MM-YYYY):');
+  if(!newDate){ bot('Reschedule cancelled.'); return; }
+  b.date = newDate; persist(); bot(`🔄 Ticket ${b.ticketId} rescheduled to ${newDate}.`);
+}
+function whereIsFlight(id){
+  if(!id){ bot('Provide flight or ticket id.'); return; }
+  bot(`🛰️ ${id.toUpperCase()} — Status: On Time · Gate ${Math.floor(1+Math.random()*50)} · Departs in ${Math.floor(Math.random()*120)} min (simulated).`);
+}
+function showBaggage(){ bot('🧳 Baggage allowance: Economy 15kg | Business 25kg | Cabin 7kg. Extra ₹500 per 5kg.'); }
+function showSecurity(){ bot('🛂 Security: Carry valid ID, liquids <100ml in cabin, check local rules.'); }
+function showRefund(){ bot('💵 Refund policy (simulated): Full refund within 24h. After that partial/refund rules apply.'); }
+function showCheckin(){ bot('🛄 Check-in: Opens 24h before departure. Online check-in is recommended.'); }
+function showPromo(){ bot('🎟️ Active promos: FLY100 → ₹1000 off (demo). Type it when asked during booking.'); }
+
+/* ---------------------
+   receipt download: TXT and PDF
+   --------------------- */
+function downloadTxt(b){
+  const txt = [
+    'SkySwift — Payment Receipt',
+    `Receipt ID: ${b.receiptId || ''}`,
+    `Ticket ID: ${b.ticketId || ''}`,
+    `Passenger: ${b.passengerName || ''}`,
+    `Age: ${b.age || ''}  Gender: ${b.gender || ''}`,
+    `Health: ${b.health || ''}  Pregnant: ${b.pregnancy || ''}`,
+    `Route: ${b.from || ''} → ${b.to || ''}`,
+    `Date/Time: ${b.date || ''} ${b.time || ''}`,
+    `Seats: ${(b.seatsList||[]).join(', ')}`,
+    `Amount: ₹${b.amount || ''}`,
+    `Payment: ${b.paymentMethod || ''}`,
+    `Transaction: ${b.transactionId || ''}`,
+    `Paid At: ${b.paidAt ? new Date(b.paidAt).toLocaleString() : ''}`
+  ].join('\n');
+  const blob = new Blob([txt], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `receipt_${b.receiptId||b.ticketId}.txt`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+/* PDF: styled with header, sections. Replace logoDataUrl with your base64 PNG to embed a logo in the top-left. */
+async function downloadPdf(b){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const left = 36; let y = 40;
+
+  // Optional logo: set logoDataUrl to a data URL string if you want to embed
+  const logoDataUrl = ''; // e.g., 'data:image/png;base64,...' — replace with your own base64 if desired
+  // header bar
+  doc.setFillColor(59,130,246); doc.rect(0,0,595,56,'F');
+  doc.setFontSize(18); doc.setTextColor(255,255,255);
+  doc.text('SkySwift Airlines', left, 36);
+  if(logoDataUrl){
+    try{ doc.addImage(logoDataUrl, 'PNG', 520, 10, 40, 36); }catch(e){ /* ignore image errors */ }
+  } else {
+    doc.setFontSize(14); doc.text('✈️', 520, 36);
+  }
+
+  y += 36;
+  doc.setFontSize(12); doc.setTextColor(0,0,0);
+
+  // passenger
+  doc.setFontSize(13); doc.setTextColor(14,74,120); doc.text('Passenger Details', left, y); y+=18;
+  doc.setFontSize(11); doc.setTextColor(0,0,0);
+  doc.text(`Name: ${b.passengerName || ''}`, left, y); y+=14;
+  doc.text(`Age: ${b.age || ''}   Gender: ${b.gender || ''}`, left, y); y+=14;
+  doc.text(`Health: ${b.health || ''}`, left, y); y+=14;
+  doc.text(`Pregnant: ${b.pregnancy || ''}`, left, y); y+=20;
+
+  // flight
+  doc.setFontSize(13); doc.setTextColor(14,74,120); doc.text('Flight Details', left, y); y+=18;
+  doc.setFontSize(11); doc.setTextColor(0,0,0);
+  doc.text(`Ticket: ${b.ticketId || ''}`, left, y); y+=14;
+  doc.text(`Route: ${b.from || ''} → ${b.to || ''}`, left, y); y+=14;
+  doc.text(`Date/Time: ${b.date || ''} ${b.time || ''}`, left, y); y+=14;
+  doc.text(`Seats: ${(b.seatsList||[]).join(', ')}`, left, y); y+=20;
+
+  // payment
+  doc.setFontSize(13); doc.setTextColor(14,74,120); doc.text('Payment', left, y); y+=18;
+  doc.setFontSize(11); doc.setTextColor(0,0,0);
+  doc.text(`Amount Paid: ₹${b.amount || ''}`, left, y); y+=14;
+  doc.text(`Method: ${b.paymentMethod || ''}`, left, y); y+=14;
+  doc.text(`Transaction: ${b.transactionId || ''}`, left, y); y+=14;
+  doc.text(`Receipt: ${b.receiptId || ''}`, left, y); y+=20;
+
+  doc.setFontSize(10); doc.setTextColor(120,120,120);
+  doc.text('Thank you for booking with SkySwift — safe travels! ✈️', left, y);
+
+  doc.save(`receipt_${b.receiptId||b.ticketId}.pdf`);
+}
+
+/* ---------------------
+   Weather (Open-Meteo, no key)
+   --------------------- */
+async function fetchWeather(city){
+  try{
+    const g = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then(r=>r.json());
+    if(!g || !g.results || !g.results.length){ bot(`🌦️ Could not locate city: ${city}`); return; }
+    const {latitude, longitude, name, country} = g.results[0];
+    const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`).then(r=>r.json());
+    if(!w || !w.current_weather){ bot(`🌦️ Weather not available for ${name}`); return; }
+    const cw = w.current_weather;
+    bot(`🌦️ Weather in ${name}, ${country}: ${cw.temperature}°C, wind ${cw.windspeed} km/h (Open-Meteo).`);
+  }catch(e){ bot('⚠️ Weather lookup failed (network).'); }
+}
+
+/* ---------------------
+   Misc helpers: selectFlight (stub), load storage 
+   --------------------- */
+function selectFlight(parts){
+  // placeholder - in this demo we use booking flow instead of real flight selection
+  bot('Flight selection is simulated. Use "book" to start full booking flow.');
+}
+
+/* ---------------------
+   Initialize: load saved bookings
+   --------------------- */
+(function init(){
+  const stored = JSON.parse(localStorage.getItem(STORAGE) || '[]'); bookings = stored;
+  const pts = parseInt(localStorage.getItem('skyswift_points') || '0',10) || 0; loyaltyPoints = pts;
+})();
+
+/* ---------------------
+   Cancel / where / reschedule wrappers available globally
+   --------------------- */
+window.cancelTicket = cancelTicket;
+window.reschedule = reschedule;
+window.whereIsFlight = whereIsFlight;
+window.showBookings = showBookings;
+
+
+  
+// ===== Enhanced Dummy OTP Logic =====
+const _originalHandlePaymentChoice = typeof handlePaymentChoice !== 'undefined' ? handlePaymentChoice : null;
+
+function handlePaymentChoice(method) {
+  if (/card/i.test(method)) {
+    bot("💳 Please enter your card details (e.g., 1234 5678 9012 3456 MM/YY CVV).");
+    awaitingStep = "cardDetails";
+    return;
+  }
+  if (_originalHandlePaymentChoice) _originalHandlePaymentChoice(method);
+}
+
+// Extend booking flow to handle card details and OTP
+const _originalHandleBookingFlow = typeof handleBookingFlow !== 'undefined' ? handleBookingFlow : null;
+
+handleBookingFlow = function(text) {
+  const t = text.trim();
+  if (awaitingStep === "cardDetails") {
+    if (!/\d{12,19}/.test(t)) {
+      bot("⚠️ Please enter valid card details (numbers only).");
+      return;
+    }
+    bot("📩 Sending OTP to your registered mobile number...");
+    setTimeout(() => {
+      const otp = "1234";
+      bot(`✅ OTP sent! Please enter the OTP sent to your mobile: <b>${otp}</b>`);
+      awaitingStep = "otpEntry";
+    }, 2000);
+    return;
+  }
+  if (awaitingStep === "otpEntry") {
+    if (t === "1234") {
+      bot("✅ OTP verified successfully. Processing your payment...");
+      setTimeout(() => {
+        if (typeof completeBooking === 'function') completeBooking();
+        else bot("💰 Payment successful. Booking confirmed!");
+      }, 1500);
+    } else {
+      bot("❌ Incorrect OTP. Please try again (hint: 1234).");
+    }
+    return;
+  }
+  if (_originalHandleBookingFlow) _originalHandleBookingFlow(text);
+};
+// ===== End Enhanced Dummy OTP Logic =====
+</script>
+
+<!-- PDF Ticket + QR generation -->
+<script>
+function generateTicketPDF(order) {
+  try {
+    if(!order) order = window.store && window.store.order;
+    if(!order) { console.warn('No order found for PDF generation'); return; }
+
+    // Create QR content: include PNR, passenger name, flight no, date, route
+    const qrText = `PNR:${order.pnr}|Name:${order.passenger?.fn || ''} ${order.passenger?.ln || ''}|Flight:${order.airline} ${order.flightNo}|Date:${order.date}|Route:${order.from}->${order.to}`;
+    // generate QR using QRious to a dataURL
+    const qr = new QRious({ value: qrText, size: 200 });
+    const qrDataUrl = qr.toDataURL();
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'pt', format:'a4'});
+
+    const left = 40;
+    let y = 60;
+    doc.setFontSize(20);
+    doc.text('SkySwift — E‑Ticket', left, y);
+    y += 28;
+
+    doc.setFontSize(11);
+    doc.text(`PNR: ${order.pnr}`, left, y); y += 16;
+    doc.text(`Passenger: ${order.passenger?.fn || ''} ${order.passenger?.ln || ''}`, left, y); y += 14;
+    if(order.passenger?.em) { doc.text(`Email: ${order.passenger.em}`, left, y); y += 14; }
+    doc.text(`Route: ${order.from} → ${order.to}`, left, y); y += 14;
+    doc.text(`Flight: ${order.airline} ${order.flightNo}`, left, y); y += 14;
+    doc.text(`Date: ${order.date}   Time: ${order.depart} → ${order.arrival}`, left, y); y += 14;
+    const seatsText = (order.seats && order.seats.length) ? order.seats.join(', ') : 'Auto-assigned';
+    doc.text(`Seats: ${seatsText}`, left, y); y += 16;
+    if(order.cabin) { doc.text(`Cabin: ${order.cabin}`, left, y); y += 14; }
+    doc.text(`Total Fare: ${order.total ? '₹' + order.total.toLocaleString('en-IN') : ''}`, left, y); y += 26;
+
+    // Add QR on the right
+    const qrX = 400; const qrY = 90; const qrSize = 120;
+    // addImage: (imageData, format, x, y, width, height)
+    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+
+    doc.setFontSize(10);
+    doc.text('Generated by SkySwift demo. This is an auto-generated ticket.', left, y);
+
+    // Save PDF
+    doc.save(`Ticket_${order.pnr}.pdf`);
+  } catch (e) {
+    console.error('generateTicketPDF error', e);
+    alert('Failed to generate PDF ticket. See console for details.');
+  }
+}
+
+// add Download button on confirmation screen (if not present)
+function ensureDownloadButton() {
+  try {
+    const conf = document.getElementById('confirmation');
+    if(!conf) return;
+    if(document.getElementById('downloadTicketBtn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'downloadTicketBtn';
+    btn.className = 'btn';
+    btn.style.marginTop = '12px';
+    btn.textContent = 'Download Ticket (PDF)';
+    btn.onclick = function(){
+      // use store.order if available
+      const order = window.store && window.store.order ? window.store.order : window.order || null;
+      if(!order) {
+        // try to read from localStorage last trip
+        const trips = JSON.parse(localStorage.getItem('skyswift_trips')||'[]');
+        const last = trips[trips.length-1];
+        if(last) generateTicketPDF(last);
+        else alert('No booking found to download.');
+        return;
+      }
+      generateTicketPDF(order);
+    };
+    // place button inside confirmation card
+    const card = conf.querySelector('.card');
+    if(card) card.appendChild(btn);
+  } catch(e){ console.warn(e); }
+}
+
+// Ensure button exists when confirmation page is shown
+document.addEventListener('click', function(e){
+  // if navTo called with '#confirmation', ensure button
+  if(e.target && e.target.getAttribute && e.target.getAttribute('href') === '#confirmation') {
+    setTimeout(ensureDownloadButton, 120);
+  }
+});
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(ensureDownloadButton, 400);
+});
+
+// also call generateTicketPDF automatically when booking completes -- patch existing navTo call if needed
+// (Some existing code already attempts to call it; this is a safe double-call guard)
+</script>
+
+</body>
+</html>
